@@ -1,61 +1,61 @@
 const User = require("../models/user");
 
-// GET all users
-const getUsers = (req, res) => {
-  User.find({})
-    .then((users) =>
-      res.status(200).send(
-        users.map((u) => ({
-          _id: u._id.toString(),
-          name: u.name,
-          avatar: u.avatar,
-        }))
-      )
-    )
-    .catch(() =>
-      res.status(500).send({ message: "An error occurred on the server" })
-    );
-};
+const getUsers = (req, res) => User.find({})
+    .then((users) => res.status(200).send({
+      data: users.map((u) => ({
+        _id: u._id.toString(),
+        name: u.name,
+        avatar: u.avatar,
+      })),
+    }))
+    .catch(() => res.status(500).send({ message: "An error occurred on the server" }));
 
-// CREATE new user
 const createUser = (req, res) => {
   const { name, avatar } = req.body;
 
-  // Manual field presence check to catch missing keys
   if (!name || !avatar) {
     return res.status(400).send({ message: "Invalid user data" });
   }
 
-  User.create({ name, avatar })
+  return User.create({ name, avatar })
     .then((user) =>
       res.status(201).send({
-        _id: user._id.toString(),
-        name: user.name,
-        avatar: user.avatar,
+        data: {
+          _id: user._id.toString(),
+          name: user.name,
+          avatar: user.avatar,
+        },
       })
     )
     .catch((err) => {
       if (err.name === "ValidationError") {
         return res.status(400).send({ message: "Invalid user data" });
       }
-      res.status(500).send({ message: "An error occurred on the server" });
+      return res.status(500).send({ message: "An error occurred on the server" });
     });
 };
 
-// GET user by ID
 const getUserById = (req, res) => {
-  return User.findById(req.params.userId)
+  const { userId } = req.params;
+
+  return User.findById(userId)
     .then((user) => {
       if (!user) {
         return res.status(404).send({ message: "User not found" });
       }
-      return res.status(200).send(user);
+      return res.status(200).send({
+        data: {
+          _id: user._id.toString(),
+          name: user.name,
+          avatar: user.avatar,
+        },
+      });
     })
     .catch((err) => {
       if (err.name === "CastError") {
         return res.status(400).send({ message: "Invalid user ID" });
       }
-      return res.status(500).send({ message: "An error occurred" });
+      return res.status(500).send({ message: "An error occurred on the server" });
     });
 };
 
