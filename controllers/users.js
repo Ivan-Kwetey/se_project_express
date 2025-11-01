@@ -44,23 +44,18 @@ const createUser = (req, res) => {
 
 // GET user by ID
 const getUserById = (req, res) => {
-  const { userId } = req.params;
-  User.findById(userId)
+  return User.findById(req.params.userId)
     .then((user) => {
       if (!user) {
         return res.status(404).send({ message: "User not found" });
       }
-      res.status(200).send({
-        _id: user._id.toString(),
-        name: user.name,
-        avatar: user.avatar,
-      });
+      return res.status(200).send(user);
     })
     .catch((err) => {
       if (err.name === "CastError") {
         return res.status(400).send({ message: "Invalid user ID" });
       }
-      res.status(500).send({ message: "An error occurred on the server" });
+      return res.status(500).send({ message: "An error occurred" });
     });
 };
 

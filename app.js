@@ -1,6 +1,7 @@
 const express = require("express");
 const mongoose = require("mongoose");
 const mainRouter = require("./routes/index");
+
 const app = express();
 const { PORT = 3001 } = process.env;
 
@@ -16,7 +17,6 @@ app.use((req, res, next) => {
   };
   next();
 });
-
 
 app.use(express.json());
 app.use("/", mainRouter);
