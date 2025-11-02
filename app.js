@@ -10,12 +10,12 @@ const { PORT = 3001, NODE_ENV } = process.env;
 mongoose
   .connect("mongodb://127.0.0.1:27017/wtwr_db")
   .then(() => {
-    if (NODE_ENV !== "production") {
+    if (NODE_ENV !== "production" && NODE_ENV !== "test") {
       console.log("Connected to MongoDB");
     }
   })
   .catch((err) => {
-    if (NODE_ENV !== "production") {
+    if (NODE_ENV !== "production" && NODE_ENV !== "test") {
       console.error("Failed to connect to MongoDB", err);
     }
   });
@@ -23,7 +23,7 @@ mongoose
 // Temporary authorization middleware
 app.use((req, res, next) => {
   req.user = {
-    _id: "6905e27e1251ff6a3eff9718", //test user _id
+    _id: "6905e27e1251ff6a3eff9718", // Test user _id
   };
   next();
 });
@@ -40,7 +40,7 @@ app.use((req, res) => {
 
 // Start server
 app.listen(PORT, () => {
-  if (NODE_ENV !== "production") {
+  if (NODE_ENV !== "production" && NODE_ENV !== "test") {
     console.log(`Server is running on port ${PORT}`);
   }
 });
