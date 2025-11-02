@@ -1,54 +1,61 @@
-const User = require('../models/user');
-const BadRequestError = require('../utils/errors/BadRequestError');
-const NotFoundError = require('../utils/errors/NotFoundError');
-const InternalServerError = require('../utils/errors/InternalServerError');
+const User = require("../models/user");
+const BadRequestError = require("../utils/errors/BadRequestError");
+const NotFoundError = require("../utils/errors/NotFoundError");
+const InternalServerError = require("../utils/errors/InternalServerError");
+const ERROR_CODES = require("../utils/errors");
 
-// Get all users
-module.exports.getUsers = async (req, res, next) => {
+const getUsers = async (req, res) => {
   try {
     const users = await User.find({});
-    res.send(users);
+    return res.status(200).send({ data: users });
   } catch (err) {
-    next(new InternalServerError('Failed to retrieve users'));
+    return res
+      .status(ERROR_CODES.INTERNAL_SERVER_ERROR)
+      .send({ message: new InternalServerError().message });
   }
 };
 
-// Get user by ID
-module.exports.getUserById = async (req, res, next) => {
+const getUserById = async (req, res) => {
   try {
     const { userId } = req.params;
     const user = await User.findById(userId);
-
     if (!user) {
-      throw new NotFoundError('User not found');
+      return res
+        .status(ERROR_CODES.NOT_FOUND)
+        .send({ message: new NotFoundError("User not found").message });
     }
-
-    res.send(user);
+    return res.status(200).send({ data: user });
   } catch (err) {
-    if (err.name === 'CastError') {
-      next(new BadRequestError('Invalid user ID format'));
-    } else {
-      next(err);
+    if (err.name === "CastError") {
+      return res
+        .status(ERROR_CODES.BAD_REQUEST)
+        .send({ message: new BadRequestError("Invalid user ID").message });
     }
+    return res
+      .status(ERROR_CODES.INTERNAL_SERVER_ERROR)
+      .send({ message: new InternalServerError().message });
   }
 };
 
-// Create new user
-module.exports.createUser = async (req, res, next) => {
+const createUser = async (req, res) => {
   try {
-    const { name, avatar, email } = req.body;
-
-    if (!name || !avatar || !email) {
-      throw new BadRequestError('Name, avatar, and email are required');
-    }
-
-    const newUser = await User.create({ name, avatar, email });
-    res.status(201).send(newUser);
+    const { name, avatar } = req.body;
+    const user = await User.create({ name, avatar });
+    return res.status(201).send({ data: user });
   } catch (err) {
-    if (err.name === 'ValidationError') {
-      next(new BadRequestError('Invalid user data'));
-    } else {
-      next(err);
+    if (err.name === "ValidationError") {
+      return res
+        .status(ERROR_CODES.BAD_REQUEST)
+        .send({ message: new BadRequestError("Invalid user data").message });
     }
+    return res
+      .status(ERROR_CODES.INTERNAL_SERVER_ERROR)
+      .send({ message: new InternalServerError().message });
   }
+};
+
+module.exports = {
+  getUsers,
+  getUserById,
+  createUser,
 };
