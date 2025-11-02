@@ -3,106 +3,115 @@ const BadRequestError = require("../utils/errors/BadRequestError");
 const NotFoundError = require("../utils/errors/NotFoundError");
 const InternalServerError = require("../utils/errors/InternalServerError");
 
-// CREATE clothing item
-const createItem = async (req, res) => {
+module.exports.getItems = async (req, res, next) => {
+  try {
+    const items = await ClothingItem.find({});
+    res.send(items);
+  } catch (err) {
+    next(new InternalServerError("Failed to retrieve clothing items"));
+  }
+};
+
+module.exports.createItem = async (req, res, next) => {
   try {
     const { name, weather, imageUrl } = req.body;
     const owner = req.user._id;
 
+    if (!name || !weather || !imageUrl) {
+      throw new BadRequestError("Name, weather, and imageUrl are required");
+    }
+
     const item = await ClothingItem.create({ name, weather, imageUrl, owner });
-    return res.status(201).send({ data: item });
+    res.status(201).send({ data: item });
   } catch (err) {
     if (err.name === "ValidationError") {
-      return res
-        .status(400)
-        .send({ message: new BadRequestError("Invalid clothing item data").message });
+      next(new BadRequestError("Invalid clothing item data"));
+    } else {
+      next(err);
     }
-    return res.status(500).send({ message: new InternalServerError().message });
   }
 };
 
-const getItems = async (req, res) => {
-  try {
-    const items = await ClothingItem.find({});
-    return res.status(200).send({ data: items });
-  } catch (err) {
-    return res.status(500).send({ message: new InternalServerError().message });
-  }
-};
-
-const getItemById = async (req, res) => {
+module.exports.getItemById = async (req, res, next) => {
   try {
     const { itemId } = req.params;
     const item = await ClothingItem.findById(itemId);
+
     if (!item) {
-      return res.status(404).send({ message: new NotFoundError("Item not found").message });
+      throw new NotFoundError("Clothing item not found");
     }
-    return res.status(200).send({ data: item });
+
+    res.send({ data: item });
   } catch (err) {
     if (err.name === "CastError") {
-      return res.status(400).send({ message: new BadRequestError("Invalid item ID").message });
+      next(new BadRequestError("Invalid item ID format"));
+    } else {
+      next(err);
     }
-    return res.status(500).send({ message: new InternalServerError().message });
   }
 };
 
-const deleteItem = async (req, res) => {
+module.exports.deleteItem = async (req, res, next) => {
   try {
     const { itemId } = req.params;
-    const deleted = await ClothingItem.findByIdAndDelete(itemId);
-    if (!deleted) {
-      return res.status(404).send({ message: new NotFoundError("Item not found").message });
+    const item = await ClothingItem.findByIdAndDelete(itemId);
+
+    if (!item) {
+      throw new NotFoundError("Clothing item not found");
     }
-    return res.status(200).send({ message: "Item deleted successfully" });
+
+    res.send({ message: "Item successfully deleted" });
   } catch (err) {
     if (err.name === "CastError") {
-      return res.status(400).send({ message: new BadRequestError("Invalid item ID").message });
+      next(new BadRequestError("Invalid item ID format"));
+    } else {
+      next(err);
     }
-    return res.status(500).send({ message: new InternalServerError().message });
   }
 };
 
-const likeItem = (req, res) => ClothingItem.findByIdAndUpdate(
-  req.params.itemId,
-  { $addToSet: { likes: req.user._id } },
-  { new: true },
-)
-  .then((item) => {
-    if (!item) {
-      return res.status(404).send({ message: new NotFoundError("Item not found").message });
-    }
-    return res.status(200).send({ data: item });
-  })
-  .catch((err) => {
-    if (err.name === "CastError") {
-      return res.status(400).send({ message: new BadRequestError("Invalid item ID").message });
-    }
-    return res.status(500).send({ message: new InternalServerError().message });
-  });
+module.exports.likeItem = async (req, res, next) => {
+  try {
+    const { itemId } = req.params;
+    const item = await ClothingItem.findByIdAndUpdate(
+      itemId,
+      { $addToSet: { likes: req.user._id } },
+      { new: true }
+    );
 
-const dislikeItem = (req, res) => ClothingItem.findByIdAndUpdate(
-  req.params.itemId,
-  { $pull: { likes: req.user._id } },
-  { new: true },
-)
-  .then((item) => {
     if (!item) {
-      return res.status(404).send({ message: new NotFoundError("Item not found").message });
+      throw new NotFoundError("Clothing item not found");
     }
-    return res.status(200).send({ data: item });
-  })
-  .catch((err) => {
-    if (err.name === "CastError") {
-      return res.status(400).send({ message: new BadRequestError("Invalid item ID").message });
-    }
-    return res.status(500).send({ message: new InternalServerError().message });
-  });
 
-module.exports = {
-  createItem,
-  getItems,
-  getItemById,
-  deleteItem,
-  likeItem,
-  dislikeItem,
+    res.send({ data: item });
+  } catch (err) {
+    if (err.name === "CastError") {
+      next(new BadRequestError("Invalid item ID format"));
+    } else {
+      next(new InternalServerError("Failed to like clothing item"));
+    }
+  }
+};
+
+module.exports.dislikeItem = async (req, res, next) => {
+  try {
+    const { itemId } = req.params;
+    const item = await ClothingItem.findByIdAndUpdate(
+      itemId,
+      { $pull: { likes: req.user._id } },
+      { new: true }
+    );
+
+    if (!item) {
+      throw new NotFoundError("Clothing item not found");
+    }
+
+    res.send({ data: item });
+  } catch (err) {
+    if (err.name === "CastError") {
+      next(new BadRequestError("Invalid item ID format"));
+    } else {
+      next(new InternalServerError("Failed to dislike clothing item"));
+    }
+  }
 };

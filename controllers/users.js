@@ -1,62 +1,54 @@
-const User = require("../models/user");
+const User = require('../models/user');
+const BadRequestError = require('../utils/errors/BadRequestError');
+const NotFoundError = require('../utils/errors/NotFoundError');
+const InternalServerError = require('../utils/errors/InternalServerError');
 
-const getUsers = (req, res) => User.find({})
-    .then((users) => res.status(200).send({
-      data: users.map((u) => ({
-        _id: u._id.toString(),
-        name: u.name,
-        avatar: u.avatar,
-      })),
-    }))
-    .catch(() => res.status(500).send({ message: "An error occurred on the server" }));
-
-const createUser = (req, res) => {
-  const { name, avatar } = req.body;
-
-  if (!name || !avatar) {
-    return res.status(400).send({ message: "Invalid user data" });
+// Get all users
+module.exports.getUsers = async (req, res, next) => {
+  try {
+    const users = await User.find({});
+    res.send(users);
+  } catch (err) {
+    next(new InternalServerError('Failed to retrieve users'));
   }
-
-  return User.create({ name, avatar })
-    .then((user) =>
-      res.status(201).send({
-        data: {
-          _id: user._id.toString(),
-          name: user.name,
-          avatar: user.avatar,
-        },
-      })
-    )
-    .catch((err) => {
-      if (err.name === "ValidationError") {
-        return res.status(400).send({ message: "Invalid user data" });
-      }
-      return res.status(500).send({ message: "An error occurred on the server" });
-    });
 };
 
-const getUserById = (req, res) => {
-  const { userId } = req.params;
+// Get user by ID
+module.exports.getUserById = async (req, res, next) => {
+  try {
+    const { userId } = req.params;
+    const user = await User.findById(userId);
 
-  return User.findById(userId)
-    .then((user) => {
-      if (!user) {
-        return res.status(404).send({ message: "User not found" });
-      }
-      return res.status(200).send({
-        data: {
-          _id: user._id.toString(),
-          name: user.name,
-          avatar: user.avatar,
-        },
-      });
-    })
-    .catch((err) => {
-      if (err.name === "CastError") {
-        return res.status(400).send({ message: "Invalid user ID" });
-      }
-      return res.status(500).send({ message: "An error occurred on the server" });
-    });
+    if (!user) {
+      throw new NotFoundError('User not found');
+    }
+
+    res.send(user);
+  } catch (err) {
+    if (err.name === 'CastError') {
+      next(new BadRequestError('Invalid user ID format'));
+    } else {
+      next(err);
+    }
+  }
 };
 
-module.exports = { getUsers, createUser, getUserById };
+// Create new user
+module.exports.createUser = async (req, res, next) => {
+  try {
+    const { name, avatar, email } = req.body;
+
+    if (!name || !avatar || !email) {
+      throw new BadRequestError('Name, avatar, and email are required');
+    }
+
+    const newUser = await User.create({ name, avatar, email });
+    res.status(201).send(newUser);
+  } catch (err) {
+    if (err.name === 'ValidationError') {
+      next(new BadRequestError('Invalid user data'));
+    } else {
+      next(err);
+    }
+  }
+};
