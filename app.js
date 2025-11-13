@@ -1,7 +1,6 @@
 const express = require("express");
 const mongoose = require("mongoose");
 
-// Local modules
 const mainRouter = require("./routes/index");
 const auth = require("./middlewares/auth");
 const { MONGO_URI, PORT, NODE_ENV } = require("./utils/config");
