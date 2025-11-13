@@ -1,14 +1,18 @@
+// app.js
 const express = require("express");
 const mongoose = require("mongoose");
 const mainRouter = require("./routes/index");
+const auth = require("./middlewares/auth");
+const { MONGO_URI, PORT, NODE_ENV } = require("./utils/config");
 const ERROR_CODES = require("./utils/errors");
 
 const app = express();
-const { PORT = 3001, NODE_ENV } = process.env;
 
+// ----------------------------
 // MongoDB connection
+// ----------------------------
 mongoose
-  .connect("mongodb://127.0.0.1:27017/wtwr_db")
+  .connect(MONGO_URI)
   .then(() => {
     if (NODE_ENV !== "production" && NODE_ENV !== "test") {
       console.log("Connected to MongoDB");
@@ -20,25 +24,37 @@ mongoose
     }
   });
 
-// Temporary authorization middleware
-app.use((req, res, next) => {
-  req.user = {
-    _id: "6905e27e1251ff6a3eff9718", // Test user _id
-  };
-  next();
-});
-
+// ----------------------------
+// Middleware
+// ----------------------------
 app.use(express.json());
+
+// Auth middleware (protects routes except public ones)
+app.use(auth);
+
+// ----------------------------
+// Routes
+// ----------------------------
+const { createUser, login } = require("./controllers/users");
+
+// Public routes
+app.post("/signup", createUser);
+app.post("/signin", login);
+
 app.use("/", mainRouter);
 
+// ----------------------------
 // 404 handler for undefined routes
+// ----------------------------
 app.use((req, res) => {
   res
     .status(ERROR_CODES.NOT_FOUND)
     .send({ message: "Requested resource not found" });
 });
 
+// ----------------------------
 // Start server
+// ----------------------------
 app.listen(PORT, () => {
   if (NODE_ENV !== "production" && NODE_ENV !== "test") {
     console.log(`Server is running on port ${PORT}`);

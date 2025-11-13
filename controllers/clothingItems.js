@@ -4,6 +4,7 @@ const NotFoundError = require("../utils/errors/NotFoundError");
 const InternalServerError = require("../utils/errors/InternalServerError");
 const ERROR_CODES = require("../utils/errors");
 
+// CREATE ITEM
 const createItem = async (req, res) => {
   try {
     const { name, weather, imageUrl } = req.body;
@@ -23,6 +24,7 @@ const createItem = async (req, res) => {
   }
 };
 
+// GET ALL ITEMS
 const getItems = async (req, res) => {
   try {
     const items = await ClothingItem.find({});
@@ -34,6 +36,7 @@ const getItems = async (req, res) => {
   }
 };
 
+// GET ITEM BY ID
 const getItemById = async (req, res) => {
   try {
     const { itemId } = req.params;
@@ -56,15 +59,27 @@ const getItemById = async (req, res) => {
   }
 };
 
+// DELETE ITEM (OWNER ONLY)
 const deleteItem = async (req, res) => {
   try {
     const { itemId } = req.params;
-    const deleted = await ClothingItem.findByIdAndDelete(itemId);
-    if (!deleted) {
+
+    const item = await ClothingItem.findById(itemId);
+    if (!item) {
       return res
         .status(ERROR_CODES.NOT_FOUND)
         .send({ message: new NotFoundError("Item not found").message });
     }
+
+    // Check if current user is the owner
+    if (item.owner.toString() !== req.user._id) {
+      return res
+        .status(ERROR_CODES.FORBIDDEN)
+        .send({ message: "You do not have permission to delete this item" });
+    }
+
+    await item.deleteOne();
+
     return res.status(200).send({ message: "Item deleted successfully" });
   } catch (err) {
     if (err.name === "CastError") {
@@ -78,18 +93,21 @@ const deleteItem = async (req, res) => {
   }
 };
 
+// LIKE ITEM
 const likeItem = async (req, res) => {
   try {
     const item = await ClothingItem.findByIdAndUpdate(
       req.params.itemId,
       { $addToSet: { likes: req.user._id } },
-      { new: true },
+      { new: true }
     );
+
     if (!item) {
       return res
         .status(ERROR_CODES.NOT_FOUND)
         .send({ message: new NotFoundError("Item not found").message });
     }
+
     return res.status(200).send({ data: item });
   } catch (err) {
     if (err.name === "CastError") {
@@ -103,18 +121,21 @@ const likeItem = async (req, res) => {
   }
 };
 
+// DISLIKE ITEM
 const dislikeItem = async (req, res) => {
   try {
     const item = await ClothingItem.findByIdAndUpdate(
       req.params.itemId,
       { $pull: { likes: req.user._id } },
-      { new: true },
+      { new: true }
     );
+
     if (!item) {
       return res
         .status(ERROR_CODES.NOT_FOUND)
         .send({ message: new NotFoundError("Item not found").message });
     }
+
     return res.status(200).send({ data: item });
   } catch (err) {
     if (err.name === "CastError") {
