@@ -23,4 +23,3 @@ module.exports = (req, res, next) => {
     return res.status(ERROR_CODES.UNAUTHORIZED).send({ message: "Invalid or expired token" });
   }
 };
-
