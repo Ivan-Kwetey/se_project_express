@@ -13,16 +13,33 @@ The API allows users to:
 - View and update their own user profile and avatar.  
 - Connect to a MongoDB database for persistent storage.  
 
+## Features Implemented
+
+- User registration (`/signup`) with password hashing and duplicate email handling.
+- User login (`/signin`) with JWT authentication.
+- Authentication middleware to protect routes.
+- `GET /users/me` to fetch the currently authenticated user's profile.
+- `PATCH /users/me` to update the current user's name and avatar.
+- CRUD operations for clothing items:
+  - Create, read, delete (owner-only), like, and dislike items.
+- Error handling for:
+  - Validation errors
+  - Not found errors
+  - Unauthorized access
+  - Forbidden actions
+  - Server errors
+- Passwords are hidden from responses and database queries unless explicitly needed (like during login).
+
 ## Technologies and Techniques Used
 
-- **Node.js & Express.js** — server framework and routing.  
-- **MongoDB with Mongoose** — database and schema modeling.  
-- **JWT (JSON Web Tokens)** — authentication and authorization.  
-- **bcryptjs** — password hashing.  
-- **Validator** — URL, email, and string validation for data integrity.  
-- **ESLint** — code quality and consistency enforcement.  
-- **RESTful API design** — clean, resource-based architecture.  
-- **Environment-based configuration** — separate production and development modes using `config.js`.  
+- **Node.js** and **Express.js** — server framework and routing.
+- **MongoDB** with **Mongoose** — database and schema modeling.
+- **Validator** — URL and string validation for data integrity.
+- **bcryptjs** — hashing passwords for security.
+- **jsonwebtoken (JWT)** — authentication and authorization.
+- **ESLint** — code quality and consistency enforcement.
+- **RESTful API design** — clean, resource-based architecture.
+- **Environment-based configuration** — separate production and development modes (`config.js`).
 
 ## Running the Project
 
