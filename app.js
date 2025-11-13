@@ -1,10 +1,12 @@
 const express = require("express");
 const mongoose = require("mongoose");
 
+// Local modules
 const mainRouter = require("./routes/index");
 const auth = require("./middlewares/auth");
 const { MONGO_URI, PORT, NODE_ENV } = require("./utils/config");
 const ERROR_CODES = require("./utils/errors");
+const { createUser, login } = require("./controllers/users");
 
 const app = express();
 
@@ -17,7 +19,9 @@ mongoose
     }
   })
   .catch(() => {
-    // intentionally left empty to satisfy linter
+    if (NODE_ENV !== "production" && NODE_ENV !== "test") {
+      // console.error("Failed to connect to MongoDB");
+    }
   });
 
 // Middleware
@@ -27,7 +31,6 @@ app.use(express.json());
 app.use(auth);
 
 // Public routes
-const { createUser, login } = require("./controllers/users");
 app.post("/signup", createUser);
 app.post("/signin", login);
 
