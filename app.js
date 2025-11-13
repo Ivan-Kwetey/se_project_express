@@ -1,5 +1,6 @@
 const express = require("express");
 const mongoose = require("mongoose");
+
 const mainRouter = require("./routes/index");
 const auth = require("./middlewares/auth");
 const { MONGO_URI, PORT, NODE_ENV } = require("./utils/config");
@@ -15,9 +16,8 @@ mongoose
       // console.log("Connected to MongoDB");
     }
   })
-  .catch((_err) => {
-    // console.error("Failed to connect to MongoDB", _err);
-    // intentionally ignored to satisfy linter
+  .catch(() => {
+    // intentionally left empty to satisfy linter
   });
 
 // Middleware
