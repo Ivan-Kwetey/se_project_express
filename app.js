@@ -15,10 +15,9 @@ mongoose
       // console.log("Connected to MongoDB");
     }
   })
-  .catch((err) => {
-    if (NODE_ENV !== "production" && NODE_ENV !== "test") {
-      // console.error("Failed to connect to MongoDB", err);
-    }
+  .catch((_err) => {
+    // console.error("Failed to connect to MongoDB", _err);
+    // intentionally ignored to satisfy linter
   });
 
 // Middleware
@@ -27,13 +26,12 @@ app.use(express.json());
 // Auth middleware (protects routes except public ones)
 app.use(auth);
 
-// Routes
-const { createUser, login } = require("./controllers/users");
-
 // Public routes
+const { createUser, login } = require("./controllers/users");
 app.post("/signup", createUser);
 app.post("/signin", login);
 
+// Protected routes
 app.use("/", mainRouter);
 
 // 404 handler for undefined routes
