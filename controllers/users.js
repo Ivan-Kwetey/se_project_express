@@ -107,14 +107,25 @@ const createUser = async (req, res) => {
 };
 
 // LOGIN (SIGNIN)
-const login = (req, res) =>
-  User.findUserByCredentials(req.body.email, req.body.password)
-    .then(user => res.send({
-      token: jwt.sign({ _id: user._id }, JWT_SECRET, { expiresIn: "7d" })
-    }))
+const login = (req, res) => {
+  const { email, password } = req.body;
+
+  // Return 400 if required fields are missing
+  if (!email || !password) {
+    return res
+      .status(ERROR_CODES.BAD_REQUEST)
+      .send({ message: "Email and password are required" });
+  }
+
+  return User.findUserByCredentials(email, password)
+    .then((user) => {
+      const token = jwt.sign({ _id: user._id }, JWT_SECRET, { expiresIn: "7d" });
+      return res.send({ token });
+    })
     .catch(() =>
       res.status(ERROR_CODES.UNAUTHORIZED).send({ message: "Invalid email or password" })
     );
+};
 
 module.exports = {
   getCurrentUser,
