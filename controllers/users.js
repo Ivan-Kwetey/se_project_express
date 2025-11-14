@@ -72,6 +72,13 @@ const createUser = async (req, res) => {
   try {
     const { name, about, avatar, email, password } = req.body;
 
+    // Validate required fields
+    if (!email || !password) {
+      return res
+        .status(ERROR_CODES.BAD_REQUEST)
+        .send({ message: "Email and password are required" });
+    }
+
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const user = await User.create({
@@ -82,7 +89,6 @@ const createUser = async (req, res) => {
       password: hashedPassword,
     });
 
-    // Remove password from response
     const userSafe = user.toObject();
     delete userSafe.password;
 
@@ -107,24 +113,29 @@ const createUser = async (req, res) => {
 };
 
 // LOGIN (SIGNIN)
-const login = (req, res) => {
+const login = async (req, res) => {
   const { email, password } = req.body;
 
-  // Return 400 if required fields are missing
   if (!email || !password) {
     return res
       .status(ERROR_CODES.BAD_REQUEST)
       .send({ message: "Email and password are required" });
   }
 
-  return User.findUserByCredentials(email, password)
-    .then((user) => {
-      const token = jwt.sign({ _id: user._id }, JWT_SECRET, { expiresIn: "7d" });
-      return res.send({ token });
-    })
-    .catch(() =>
-      res.status(ERROR_CODES.UNAUTHORIZED).send({ message: "Invalid email or password" })
-    );
+  try {
+    const user = await User.findUserByCredentials(email, password);
+    const token = jwt.sign({ _id: user._id }, JWT_SECRET, { expiresIn: "7d" });
+    return res.send({ token });
+  } catch (err) {
+    if (err.message === "Incorrect email or password") {
+      return res
+        .status(ERROR_CODES.UNAUTHORIZED)
+        .send({ message: "Invalid email or password" });
+    }
+    return res
+      .status(ERROR_CODES.INTERNAL_SERVER_ERROR)
+      .send({ message: new InternalServerError().message });
+  }
 };
 
 module.exports = {

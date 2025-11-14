@@ -11,7 +11,7 @@ const createItem = async (req, res) => {
     const owner = req.user._id;
 
     const item = await ClothingItem.create({ name, weather, imageUrl, owner });
-    return res.status(201).send({ data: item });
+    return res.status(ERROR_CODES.CREATED).send({ data: item });
   } catch (err) {
     if (err.name === "ValidationError") {
       return res
@@ -28,7 +28,7 @@ const createItem = async (req, res) => {
 const getItems = async (req, res) => {
   try {
     const items = await ClothingItem.find({});
-    return res.status(200).send({ data: items });
+    return res.status(ERROR_CODES.OK).send({ data: items });
   } catch (err) {
     return res
       .status(ERROR_CODES.INTERNAL_SERVER_ERROR)
@@ -46,7 +46,7 @@ const getItemById = async (req, res) => {
         .status(ERROR_CODES.NOT_FOUND)
         .send({ message: new NotFoundError("Item not found").message });
     }
-    return res.status(200).send({ data: item });
+    return res.status(ERROR_CODES.OK).send({ data: item });
   } catch (err) {
     if (err.name === "CastError") {
       return res
@@ -71,7 +71,6 @@ const deleteItem = async (req, res) => {
         .send({ message: new NotFoundError("Item not found").message });
     }
 
-    // Check if current user is the owner
     if (item.owner.toString() !== req.user._id) {
       return res
         .status(ERROR_CODES.FORBIDDEN)
@@ -80,7 +79,7 @@ const deleteItem = async (req, res) => {
 
     await item.deleteOne();
 
-    return res.status(200).send({ message: "Item deleted successfully" });
+    return res.status(ERROR_CODES.OK).send({ message: "Item deleted successfully" });
   } catch (err) {
     if (err.name === "CastError") {
       return res
@@ -108,7 +107,7 @@ const likeItem = async (req, res) => {
         .send({ message: new NotFoundError("Item not found").message });
     }
 
-    return res.status(200).send({ data: item });
+    return res.status(ERROR_CODES.OK).send({ data: item });
   } catch (err) {
     if (err.name === "CastError") {
       return res
@@ -136,7 +135,7 @@ const dislikeItem = async (req, res) => {
         .send({ message: new NotFoundError("Item not found").message });
     }
 
-    return res.status(200).send({ data: item });
+    return res.status(ERROR_CODES.OK).send({ data: item });
   } catch (err) {
     if (err.name === "CastError") {
       return res

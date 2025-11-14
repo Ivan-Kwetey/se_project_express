@@ -1,5 +1,6 @@
 const express = require("express");
 const mongoose = require("mongoose");
+const cors = require("cors");
 
 const mainRouter = require("./routes/index");
 const auth = require("./middlewares/auth");
@@ -24,9 +25,8 @@ mongoose
   });
 
 // Middleware
+app.use(cors());
 app.use(express.json());
-
-// Auth middleware (protects routes except public ones)
 app.use(auth);
 
 // Public routes
@@ -36,7 +36,7 @@ app.post("/signin", login);
 // Protected routes
 app.use("/", mainRouter);
 
-// 404 handler for undefined routes
+// 404 handler
 app.use((req, res) => {
   res
     .status(ERROR_CODES.NOT_FOUND)
