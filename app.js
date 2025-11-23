@@ -4,7 +4,7 @@ const cors = require("cors");
 
 const mainRouter = require("./routes/index");
 const auth = require("./middlewares/auth");
-const { MONGO_URI, PORT, NODE_ENV } = require("./utils/config");
+const { MONGO_URI, PORT } = require("./utils/config"); // Removed NODE_ENV
 const ERROR_CODES = require("./utils/errors");
 const { createUser, login } = require("./controllers/users");
 
@@ -15,9 +15,9 @@ const app = express();
 // ---------------------------
 app.use(cors());
 app.use(express.json());
-// Serve a simple favicon route without auth to avoid browser 401s on /favicon.ico
+
+// Serve a simple favicon route without auth
 app.get("/favicon.ico", (req, res) => {
-  // Serve a tiny inline SVG as the favicon
   res.setHeader("Content-Type", "image/svg+xml");
   const svg = `<?xml version="1.0" encoding="UTF-8"?>
   <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
@@ -26,6 +26,7 @@ app.get("/favicon.ico", (req, res) => {
   </svg>`;
   res.status(200).send(svg);
 });
+
 app.use(auth);
 
 // ---------------------------
@@ -56,17 +57,11 @@ mongoose
     useNewUrlParser: true,
     useUnifiedTopology: true,
   })
-  .then(() => console.log("✅ Connected to MongoDB"))
-  .catch((err) => {
-    console.error("❌ MongoDB connection error:", err);
-    process.exit(1); // Exit if DB connection fails
-  });
+  .catch(() => process.exit(1)); // exit if DB connection fails
 
 // ---------------------------
 // Start server
 // ---------------------------
-app.listen(PORT, () => {
-  console.log(`🚀 Server is running on port ${PORT}`);
-});
+app.listen(PORT);
 
 module.exports = app;

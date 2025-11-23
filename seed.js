@@ -104,19 +104,14 @@ const sampleItems = [
 
 async function seedDatabase() {
   try {
-    // Connect to MongoDB
     await mongoose.connect(MONGO_URI, {
       useNewUrlParser: true,
       useUnifiedTopology: true,
     });
-    console.log("✅ Connected to MongoDB");
 
-    // Clear existing data
     await ClothingItem.deleteMany({});
     await User.deleteMany({});
-    console.log("🗑️  Cleared existing data");
 
-    // Create a default user
     const user = await User.create({
       name: "Demo User",
       avatar:
@@ -124,23 +119,16 @@ async function seedDatabase() {
       email: "demo@example.com",
       password: "password123",
     });
-    console.log("✅ Created demo user");
 
-    // Add owner to sample items
     const itemsWithOwner = sampleItems.map((item) => ({
       ...item,
       owner: user._id,
     }));
 
-    // Insert sample items
-    const insertedItems = await ClothingItem.insertMany(itemsWithOwner);
-    console.log(`✅ Seeded ${insertedItems.length} clothing items`);
+    await ClothingItem.insertMany(itemsWithOwner);
 
-    // Close connection
     await mongoose.connection.close();
-    console.log("🔌 Disconnected from MongoDB");
   } catch (error) {
-    console.error("❌ Error seeding database:", error);
     process.exit(1);
   }
 }
