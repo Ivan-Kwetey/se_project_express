@@ -27,9 +27,11 @@ const app = express();
 mongoose
   .connect("mongodb://127.0.0.1:27017/wtwr_db")
   .then(() => {
+    // eslint-disable-next-line no-console
     console.log("Connected to MongoDB");
   })
   .catch((err) => {
+    // eslint-disable-next-line no-console
     console.error("MongoDB connection error:", err);
   });
 
@@ -98,5 +100,6 @@ app.use(errorHandler);
 // Start Server
 // ---------------------------
 app.listen(PORT, () => {
+  // eslint-disable-next-line no-console
   console.log(`Server is running on port ${PORT}`);
 });
