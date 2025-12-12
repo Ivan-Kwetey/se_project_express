@@ -1,11 +1,23 @@
 const router = require("express").Router();
 const {
+  createUser,
+  login,
   getCurrentUser,
   updateCurrentUser,
 } = require("../controllers/users");
 
-router.get("/me", getCurrentUser);
+const {
+  validateSignup,
+  validateSignin,
+  validateUpdateUser,
+} = require("../middlewares/validation");
 
-router.patch("/me", updateCurrentUser);
+// Public routes
+router.post("/signup", validateSignup, createUser);
+router.post("/signin", validateSignin, login);
+
+// Protected routes
+router.get("/me", getCurrentUser);
+router.patch("/me", validateUpdateUser, updateCurrentUser);
 
 module.exports = router;

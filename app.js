@@ -1,68 +1,106 @@
 require("dotenv").config();
 const express = require("express");
 const mongoose = require("mongoose");
+const helmet = require("helmet");
+const { errors } = require("celebrate");
 const cors = require("cors");
+const rateLimit = require("express-rate-limit");
 
-const mainRouter = require("./routes/index");
+const { requestLogger, errorLogger } = require("./middlewares/logger");
+const { errorHandler } = require("./middlewares/errorHandler");
+const { validateSignup, validateSignin } = require("./middlewares/validation");
+
 const auth = require("./middlewares/auth");
-const { MONGO_URI, PORT } = require("./utils/config"); // Removed NODE_ENV
-const ERROR_CODES = require("./utils/errors");
+const NotFoundError = require("./utils/errors/NotFoundError");
+
 const { createUser, login } = require("./controllers/users");
+const clothingItemRouter = require("./routes/clothingItems");
+const usersRouter = require("./routes/users");
+
+const { PORT = 3001 } = process.env;
 
 const app = express();
 
 // ---------------------------
-// Middleware
+// Database Connection
 // ---------------------------
-app.use(cors());
+mongoose
+  .connect("mongodb://127.0.0.1:27017/wtwr_db")
+  .then(() => {
+    console.log("Connected to MongoDB");
+  })
+  .catch((err) => {
+    console.error("MongoDB connection error:", err);
+  });
+
+// ---------------------------
+// Global Middlewares
+// ---------------------------
 app.use(express.json());
+app.use(helmet());
 
-// Serve a simple favicon route without auth
-app.get("/favicon.ico", (req, res) => {
-  res.setHeader("Content-Type", "image/svg+xml");
-  const svg = `<?xml version="1.0" encoding="UTF-8"?>
-  <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
-    <rect width="64" height="64" rx="12" ry="12" fill="#4F46E5" />
-    <text x="32" y="38" font-size="28" text-anchor="middle" fill="#fff" font-family="Arial, Helvetica, sans-serif">W</text>
-  </svg>`;
-  res.status(200).send(svg);
-});
+// CORS config for WTWR project
+app.use(
+  cors({
+    origin: [
+      "http://localhost:3000",
+      "https://localhost:3000",
+      "https://wtwr.ivanavidev.com", // your frontend domain (add if needed)
+    ],
+    credentials: true,
+  })
+);
 
+// Rate Limiter
+app.use(
+  rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 100,
+  })
+);
+
+// Log all requests
+app.use(requestLogger);
+
+// ---------------------------
+// Public Routes
+// ---------------------------
+app.post("/signin", validateSignin, login);
+app.post("/signup", validateSignup, createUser);
+
+// ---------------------------
+// Authorization Middleware
+// ---------------------------
 app.use(auth);
 
 // ---------------------------
-// Public routes
+// Protected Routes
 // ---------------------------
-app.post("/signup", createUser);
-app.post("/signin", login);
+app.use("/items", clothingItemRouter);
+app.use("/users", usersRouter);
 
 // ---------------------------
-// Protected routes
+// 404 Route
 // ---------------------------
-app.use("/", mainRouter);
-
-// ---------------------------
-// 404 handler
-// ---------------------------
-app.use((req, res) => {
-  res
-    .status(ERROR_CODES.NOT_FOUND)
-    .send({ message: "Requested resource not found" });
+// 404 Route
+app.use((req, res, next) => {
+  next(new NotFoundError("Requested resource not found"));
 });
 
-// ---------------------------
-// MongoDB connection
-// ---------------------------
-mongoose
-  .connect(MONGO_URI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-  })
-  .catch(() => process.exit(1)); // exit if DB connection fails
+// Celebrate validation errors
+app.use(errors());
 
 // ---------------------------
-// Start server
+// Error Logging
 // ---------------------------
-app.listen(PORT);
+app.use(errorLogger);
 
-module.exports = app;
+// Centralized error handler
+app.use(errorHandler);
+
+// ---------------------------
+// Start Server
+// ---------------------------
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
+});
