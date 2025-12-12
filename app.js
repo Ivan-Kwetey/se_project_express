@@ -45,7 +45,6 @@ app.use(
     origin: [
       "http://localhost:3000",
       "https://localhost:3000",
-      "https://wtwr.ivanavidev.com", // your frontend domain (add if needed)
     ],
     credentials: true,
   })
@@ -79,9 +78,6 @@ app.use(auth);
 app.use("/items", clothingItemRouter);
 app.use("/users", usersRouter);
 
-// ---------------------------
-// 404 Route
-// ---------------------------
 // 404 Route
 app.use((req, res, next) => {
   next(new NotFoundError("Requested resource not found"));
