@@ -46,4 +46,4 @@ The API allows users to:
 - `npm run start` — launch the server  
 - `npm run dev` — launch the server with hot reload  
 
-The server runs by default on `localhost:3001` and connects to the local MongoDB instance.  
+The live site www.seasonwear.mine.bz.  
