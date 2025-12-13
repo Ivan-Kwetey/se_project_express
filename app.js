@@ -47,6 +47,8 @@ app.use(
     origin: [
       "http://localhost:3000",
       "https://localhost:3000",
+      "http://seasonwear.mine.bz",
+      "https://seasonwear.mine.bz"
     ],
     credentials: true,
   })
