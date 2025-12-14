@@ -44,6 +44,10 @@ The API allows users to:
 ## Running the Project
 
 - `npm run start` — launch the server  
-- `npm run dev` — launch the server with hot reload  
+- `npm run dev` — launch the server with hot reload
 
+## Frontend repo:
+https://github.com/Ivan-Kwetey/se_project_react
+
+## Live site:
 The live site www.seasonwear.mine.bz.  

@@ -1,4 +1,6 @@
 const router = require("express").Router();
+const auth = require("../middlewares/auth");
+
 const {
   createUser,
   login,
@@ -17,7 +19,7 @@ router.post("/signup", validateSignup, createUser);
 router.post("/signin", validateSignin, login);
 
 // Protected routes
-router.get("/me", getCurrentUser);
-router.patch("/me", validateUpdateUser, updateCurrentUser);
+router.get("/me",getCurrentUser);
+router.patch("/me",validateUpdateUser, updateCurrentUser);
 
 module.exports = router;

@@ -48,8 +48,7 @@ app.use(
       "http://localhost:3000",
       "https://localhost:3000",
       "http://seasonwear.mine.bz",
-      "https://seasonwear.mine.bz",
-      "seasonwear.mine.bz"
+      "https://api.seasonwear.mine.bz",
     ],
     credentials: true,
   })
