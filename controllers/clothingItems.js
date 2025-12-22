@@ -10,7 +10,7 @@ const createItem = async (req, res, next) => {
     const owner = req.user._id;
 
     const item = await ClothingItem.create({ name, weather, imageUrl, owner });
-    res.status(201).send({ data: item });
+    return res.status(201).send({ data: item });
   } catch (err) {
     if (err.name === "ValidationError") {
       return next(new BadRequestError("Invalid clothing item data"));
@@ -23,9 +23,9 @@ const createItem = async (req, res, next) => {
 const getItems = async (req, res, next) => {
   try {
     const items = await ClothingItem.find({});
-    res.send({ data: items });
+    return res.send({ data: items });
   } catch (err) {
-    next(err);
+    return next(err);
   }
 };
 
@@ -38,7 +38,7 @@ const getItemById = async (req, res, next) => {
       return next(new NotFoundError("Item not found"));
     }
 
-    res.send({ data: item });
+    return res.send({ data: item });
   } catch (err) {
     if (err.name === "CastError") {
       return next(new BadRequestError("Invalid item ID"));
@@ -61,7 +61,7 @@ const deleteItem = async (req, res, next) => {
     }
 
     await item.deleteOne();
-    res.send({ message: "Item deleted successfully" });
+    return res.send({ message: "Item deleted successfully" });
   } catch (err) {
     if (err.name === "CastError") {
       return next(new BadRequestError("Invalid item ID"));
@@ -83,7 +83,7 @@ const likeItem = async (req, res, next) => {
       return next(new NotFoundError("Item not found"));
     }
 
-    res.send({ data: item });
+    return res.send({ data: item });
   } catch (err) {
     if (err.name === "CastError") {
       return next(new BadRequestError("Invalid item ID"));
@@ -105,7 +105,7 @@ const dislikeItem = async (req, res, next) => {
       return next(new NotFoundError("Item not found"));
     }
 
-    res.send({ data: item });
+    return res.send({ data: item });
   } catch (err) {
     if (err.name === "CastError") {
       return next(new BadRequestError("Invalid item ID"));

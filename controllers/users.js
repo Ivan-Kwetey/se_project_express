@@ -18,7 +18,7 @@ const getCurrentUser = async (req, res, next) => {
       return next(new NotFoundError("User not found"));
     }
 
-    res.send({ data: user });
+    return res.send({ data: user });
   } catch (err) {
     if (err.name === "CastError") {
       return next(new BadRequestError("Invalid user ID"));
@@ -42,7 +42,7 @@ const updateCurrentUser = async (req, res, next) => {
       return next(new NotFoundError("User not found"));
     }
 
-    res.send({ data: user });
+    return res.send({ data: user });
   } catch (err) {
     if (err.name === "ValidationError") {
       return next(new BadRequestError("Invalid user data"));
@@ -73,7 +73,7 @@ const createUser = async (req, res, next) => {
     const userSafe = user.toObject();
     delete userSafe.password;
 
-    res.status(201).send({ data: userSafe });
+    return res.status(201).send({ data: userSafe });
   } catch (err) {
     if (err.code === 11000) {
       return next(new ConflictError("User with this email already exists"));
@@ -97,7 +97,7 @@ const login = async (req, res, next) => {
     const user = await User.findUserByCredentials(email, password);
     const token = jwt.sign({ _id: user._id }, JWT_SECRET, { expiresIn: "7d" });
 
-    res.send({ token });
+    return res.send({ token });
   } catch (err) {
     if (err.message === "Incorrect email or password") {
       return next(new UnauthorizedError("Invalid email or password"));
