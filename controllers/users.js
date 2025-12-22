@@ -4,136 +4,105 @@ const User = require("../models/user");
 
 const BadRequestError = require("../utils/errors/BadRequestError");
 const NotFoundError = require("../utils/errors/NotFoundError");
-const InternalServerError = require("../utils/errors/InternalServerError");
-const ERROR_CODES = require("../utils/errors");
+const ConflictError = require("../utils/errors/ConflictError");
+const UnauthorizedError = require("../utils/errors/UnauthorizedError");
 
 const { JWT_SECRET } = require("../utils/config");
 
 // GET CURRENT USER
-const getCurrentUser = async (req, res) => {
+const getCurrentUser = async (req, res, next) => {
   try {
-    const userId = req.user._id;
-    const user = await User.findById(userId);
+    const user = await User.findById(req.user._id);
+
     if (!user) {
-      return res
-        .status(ERROR_CODES.NOT_FOUND)
-        .send({ message: new NotFoundError("User not found").message });
+      return next(new NotFoundError("User not found"));
     }
 
-    return res.status(ERROR_CODES.OK).send({ data: user });
+    res.send({ data: user });
   } catch (err) {
     if (err.name === "CastError") {
-      return res
-        .status(ERROR_CODES.BAD_REQUEST)
-        .send({ message: new BadRequestError("Invalid user ID").message });
+      return next(new BadRequestError("Invalid user ID"));
     }
-
-    return res
-      .status(ERROR_CODES.INTERNAL_SERVER_ERROR)
-      .send({ message: new InternalServerError().message });
+    return next(err);
   }
 };
 
 // UPDATE CURRENT USER
-const updateCurrentUser = async (req, res) => {
+const updateCurrentUser = async (req, res, next) => {
   try {
-    const userId = req.user._id;
     const { name, avatar } = req.body;
 
-    const updatedUser = await User.findByIdAndUpdate(
-      userId,
+    const user = await User.findByIdAndUpdate(
+      req.user._id,
       { name, avatar },
       { new: true, runValidators: true }
     );
 
-    if (!updatedUser) {
-      return res
-        .status(ERROR_CODES.NOT_FOUND)
-        .send({ message: new NotFoundError("User not found").message });
+    if (!user) {
+      return next(new NotFoundError("User not found"));
     }
 
-    return res.status(ERROR_CODES.OK).send({ data: updatedUser });
+    res.send({ data: user });
   } catch (err) {
     if (err.name === "ValidationError") {
-      return res
-        .status(ERROR_CODES.BAD_REQUEST)
-        .send({ message: new BadRequestError("Invalid user data").message });
+      return next(new BadRequestError("Invalid user data"));
     }
-
-    return res
-      .status(ERROR_CODES.INTERNAL_SERVER_ERROR)
-      .send({ message: new InternalServerError().message });
+    return next(err);
   }
 };
 
 // CREATE USER (SIGNUP)
-const createUser = async (req, res) => {
+const createUser = async (req, res, next) => {
   try {
     const { name, about, avatar, email, password } = req.body;
 
-    // Validate required fields
     if (!email || !password) {
-      return res
-        .status(ERROR_CODES.BAD_REQUEST)
-        .send({ message: "Email and password are required" });
+      throw new BadRequestError("Email and password are required");
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const hash = await bcrypt.hash(password, 10);
 
     const user = await User.create({
       name,
       about,
       avatar,
       email,
-      password: hashedPassword,
+      password: hash,
     });
 
     const userSafe = user.toObject();
     delete userSafe.password;
 
-    return res.status(ERROR_CODES.CREATED).send({ data: userSafe });
+    res.status(201).send({ data: userSafe });
   } catch (err) {
     if (err.code === 11000) {
-      return res
-        .status(ERROR_CODES.CONFLICT)
-        .send({ message: "User with this email already exists" });
+      return next(new ConflictError("User with this email already exists"));
     }
-
     if (err.name === "ValidationError") {
-      return res
-        .status(ERROR_CODES.BAD_REQUEST)
-        .send({ message: new BadRequestError("Invalid user data").message });
+      return next(new BadRequestError("Invalid user data"));
     }
-
-    return res
-      .status(ERROR_CODES.INTERNAL_SERVER_ERROR)
-      .send({ message: new InternalServerError().message });
+    return next(err);
   }
 };
 
 // LOGIN (SIGNIN)
-const login = async (req, res) => {
+const login = async (req, res, next) => {
   const { email, password } = req.body;
 
   if (!email || !password) {
-    return res
-      .status(ERROR_CODES.BAD_REQUEST)
-      .send({ message: "Email and password are required" });
+    return next(new BadRequestError("Email and password are required"));
   }
 
   try {
     const user = await User.findUserByCredentials(email, password);
     const token = jwt.sign({ _id: user._id }, JWT_SECRET, { expiresIn: "7d" });
-    return res.send({ token });
+
+    res.send({ token });
   } catch (err) {
     if (err.message === "Incorrect email or password") {
-      return res
-        .status(ERROR_CODES.UNAUTHORIZED)
-        .send({ message: "Invalid email or password" });
+      return next(new UnauthorizedError("Invalid email or password"));
     }
-    return res
-      .status(ERROR_CODES.INTERNAL_SERVER_ERROR)
-      .send({ message: new InternalServerError().message });
+    return next(err);
   }
 };
 
